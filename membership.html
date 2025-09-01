@@ -39,12 +39,18 @@
       color: #333;
     }
 
-    .form-box input {
+    .form-box input, .form-box textarea {
       width: 100%;
       padding: 12px;
       margin-bottom: 15px;
       border: 1px solid #ccc;
       border-radius: 8px;
+      box-sizing: border-box;
+    }
+
+    .form-box textarea {
+      resize: vertical;
+      min-height: 100px;
     }
 
     .form-box button {
@@ -167,6 +173,25 @@
           <a href="#" id="show-register">Register here</a>
         </p>
       </div>
+
+      <!-- Feedback Form (hidden by default) -->
+      <div class="form-box" id="feedback-box" style="display: none;">
+        <h3>Submit Feedback</h3>
+        <form id="feedbackForm">
+          <textarea id="feedbackContent" placeholder="Your feedback or concerns" required maxlength="500"></textarea>
+          <p><small><span id="charCount">0</span>/500 characters</small></p>
+          <button type="submit">Submit Feedback</button>
+        </form>
+        <p class="switch-form">
+          <a href="#" id="logout-link">Logout</a>
+        </p>
+      </div>
+
+      <!-- Prompt for non-authenticated users -->
+      <div id="feedback-prompt" class="form-box">
+        <h3>Share Your Feedback</h3>
+        <p>Please <a href="#" id="prompt-login">login</a> or <a href="#" id="prompt-register">register</a> to submit feedback.</p>
+      </div>
     </section>
   </main>
 
@@ -177,9 +202,9 @@
   <script type="module">
     // Import Firebase SDKs
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } 
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } 
       from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc } 
+    import { getFirestore, doc, setDoc, getDoc, addDoc } 
       from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
     // Firebase config (SECURITY WARNING: Move to backend for production)
@@ -201,26 +226,19 @@
     // DOM elements
     const registerForm = document.getElementById("registerForm");
     const loginForm = document.getElementById("loginForm");
+    const feedbackForm = document.getElementById("feedbackForm");
     const showLoginLink = document.getElementById("show-login");
     const showRegisterLink = document.getElementById("show-register");
+    const promptLoginLink = document.getElementById("prompt-login");
+    const promptRegisterLink = document.getElementById("prompt-register");
+    const logoutLink = document.getElementById("logout-link");
     const loginBox = document.getElementById("login-box");
     const registerBox = document.getElementById("register-box");
+    const feedbackBox = document.getElementById("feedback-box");
+    const feedbackPrompt = document.getElementById("feedback-prompt");
     const toast = document.getElementById("toast");
-
-    // Toggle forms
-    showLoginLink.addEventListener("click", (e) => {
-      e.preventDefault();
-      registerBox.style.display = "none";
-      loginBox.style.display = "block";
-      loginBox.scrollIntoView({ behavior: "smooth" });
-    });
-
-    showRegisterLink.addEventListener("click", (e) => {
-      e.preventDefault();
-      loginBox.style.display = "none";
-      registerBox.style.display = "block";
-      registerBox.scrollIntoView({ behavior: "smooth" });
-    });
+    const feedbackContent = document.getElementById("feedbackContent");
+    const charCount = document.getElementById("charCount");
 
     // Show toast notification
     const showToast = (message, type = "error") => {
@@ -271,6 +289,100 @@
       return passwordRegex.test(password);
     };
 
+    // Update character count for feedback
+    feedbackContent.addEventListener("input", () => {
+      const count = feedbackContent.value.length;
+      charCount.textContent = count;
+    });
+
+    // Toggle forms based on auth state
+    const updateUIForAuthState = (user) => {
+      if (user) {
+        registerBox.style.display = "none";
+        loginBox.style.display = "none";
+        feedbackBox.style.display = "block";
+        feedbackPrompt.style.display = "none";
+      } else {
+        registerBox.style.display = "block";
+        loginBox.style.display = "none";
+        feedbackBox.style.display = "none";
+        feedbackPrompt.style.display = "block";
+      }
+    };
+
+    // Check authentication state
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        console.log("User is authenticated:", user.uid);
+        const userSnap = await getDoc(doc(db, "users", user.uid));
+        if (userSnap.exists()) {
+          const role = userSnap.data().role;
+          console.log("User role:", role);
+          if (role === "admin") {
+            window.location.href = "admin.html";
+          } else {
+            updateUIForAuthState(user);
+          }
+        } else {
+          console.error("User data not found in Firestore for user:", user.uid);
+          showToast("User data not found. Please contact support.");
+          updateUIForAuthState(null);
+        }
+      } else {
+        console.log("No user is authenticated");
+        updateUIForAuthState(null);
+      }
+    });
+
+    // Toggle forms
+    showLoginLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      registerBox.style.display = "none";
+      loginBox.style.display = "block";
+      feedbackBox.style.display = "none";
+      feedbackPrompt.style.display = "block";
+      loginBox.scrollIntoView({ behavior: "smooth" });
+    });
+
+    showRegisterLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      loginBox.style.display = "none";
+      registerBox.style.display = "block";
+      feedbackBox.style.display = "none";
+      feedbackPrompt.style.display = "block";
+      registerBox.scrollIntoView({ behavior: "smooth" });
+    });
+
+    promptLoginLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      registerBox.style.display = "none";
+      loginBox.style.display = "block";
+      feedbackBox.style.display = "none";
+      feedbackPrompt.style.display = "block";
+      loginBox.scrollIntoView({ behavior: "smooth" });
+    });
+
+    promptRegisterLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      loginBox.style.display = "none";
+      registerBox.style.display = "block";
+      feedbackBox.style.display = "none";
+      feedbackPrompt.style.display = "block";
+      registerBox.scrollIntoView({ behavior: "smooth" });
+    });
+
+    // Logout handler
+    logoutLink.addEventListener("click", async (e) => {
+      e.preventDefault();
+      try {
+        await signOut(auth);
+        showToast("Logged out successfully", "success");
+        updateUIForAuthState(null);
+      } catch (error) {
+        showToast("Error logging out: " + error.message);
+      }
+    });
+
     // Registration handler
     registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -279,7 +391,6 @@
       const fullName = document.getElementById("fullName").value.trim();
       const submitButton = registerForm.querySelector("button");
 
-      // Client-side validation
       if (fullName.length < 2) {
         showToast("Full name must be at least 2 characters.");
         return;
@@ -307,15 +418,14 @@
           name: fullName,
           email: email,
           role: "user",
-          status: "approved", // Set to approved since no email verification
+          status: "approved",
           createdAt: new Date().toISOString()
         });
         console.log("Firestore write successful for user:", user.uid);
 
-        showToast(`Registration successful! Welcome, ${fullName}. Please log in to continue.`, "success");
+        showToast(`Registration successful! Welcome, ${fullName}.`, "success");
         e.target.reset();
-        loginBox.style.display = "block";
-        registerBox.style.display = "none";
+        updateUIForAuthState(user);
       } catch (error) {
         console.error("Registration error:", error.code, error.message);
         showToast(getFriendlyErrorMessage(error.code));
@@ -331,7 +441,6 @@
       const password = document.getElementById("loginPassword").value;
       const submitButton = loginForm.querySelector("button");
 
-      // Client-side validation
       if (!isValidEmail(email)) {
         showToast("Please enter a valid email address.");
         return;
@@ -358,7 +467,8 @@
           if (role === "admin") {
             window.location.href = "admin.html";
           } else {
-            window.location.href = "index.html";
+            showToast("Login successful!", "success");
+            updateUIForAuthState(user);
           }
         } else {
           console.error("User data not found in Firestore for user:", user.uid);
@@ -366,6 +476,48 @@
         }
       } catch (error) {
         console.error("Login error:", error.code, error.message);
+        showToast(getFriendlyErrorMessage(error.code));
+      } finally {
+        setButtonLoading(submitButton, false);
+      }
+    });
+
+    // Feedback submission handler
+    feedbackForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const content = document.getElementById("feedbackContent").value.trim();
+      const submitButton = feedbackForm.querySelector("button");
+
+      if (!content) {
+        showToast("Feedback content is required.");
+        return;
+      }
+
+      submitButton.dataset.originalText = submitButton.textContent;
+      setButtonLoading(submitButton, true);
+
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          showToast("You must be logged in to submit feedback.");
+          updateUIForAuthState(null);
+          return;
+        }
+
+        console.log("Submitting feedback for user:", user.uid);
+        await addDoc(collection(db, "reviews"), {
+          userEmail: user.email,
+          userId: user.uid,
+          content: content,
+          status: "pending",
+          createdAt: new Date().toISOString()
+        });
+        console.log("Feedback submitted successfully");
+        showToast("Feedback submitted successfully! Thank you.", "success");
+        feedbackForm.reset();
+        charCount.textContent = "0";
+      } catch (error) {
+        console.error("Feedback submission error:", error.code, error.message);
         showToast(getFriendlyErrorMessage(error.code));
       } finally {
         setButtonLoading(submitButton, false);
