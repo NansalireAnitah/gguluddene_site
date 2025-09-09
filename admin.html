@@ -76,6 +76,7 @@
     .approve-btn { background: green; color: #fff; }
     .delete-btn { background: crimson; color: #fff; }
     .admin-btn { background: #dd9803; color: #fff; }
+    .edit-btn { background: #0288d1; color: #fff; }
     .users-table {
       width: 100%;
       border-collapse: collapse;
@@ -102,6 +103,32 @@
     }
     .toast.error { background: #d32f2f; }
     .toast.success { background: #2e7d32; }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+    .modal-content {
+      background: #fff;
+      width: 90%;
+      max-width: 500px;
+      margin: 50px auto;
+      padding: 20px;
+      border-radius: 8px;
+      position: relative;
+    }
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
+      cursor: pointer;
+    }
     @keyframes slideIn {
       from { transform: translateX(100%); }
       to { transform: translateX(0); }
@@ -109,19 +136,16 @@
   </style>
 </head>
 <body>
-  <!-- Sidebar -->
   <div class="sidebar">
     <h2>Admin Panel</h2>
     <ul>
       <li onclick="showSection('blogs')"><i class="fas fa-blog"></i> Manage Blogs</li>
-      <li onclick="showSection('users')"><i class="fas fa-users"></i> Manage Users</li>
+      <li onclick="showSection('users'); fetchUsers();"><i class="fas fa-users"></i> Manage Users</li>
       <li onclick="showSection('reviews')"><i class="fas fa-comments"></i> User Reviews</li>
     </ul>
   </div>
 
-  <!-- Main Content -->
   <div class="main-content">
-    <!-- Blog Section -->
     <div id="blogs" class="card section">
       <h3>Post a New Blog</h3>
       <form id="blogForm">
@@ -134,9 +158,23 @@
       <div id="blogsList"></div>
     </div>
 
-    <!-- Users Section -->
     <div id="users" class="card section" style="display:none;">
       <h3>Manage Users</h3>
+      <h4>Create New User</h4>
+      <form id="createUserForm">
+        <input type="text" id="createName" placeholder="Full Name" required>
+        <input type="email" id="createEmail" placeholder="Email Address" required>
+        <select id="createRole" required>
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+        <select id="createStatus" required>
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+        </select>
+        <button type="submit">Create User</button>
+      </form>
+      <h4>Existing Users</h4>
       <table class="users-table">
         <thead>
           <tr>
@@ -151,26 +189,42 @@
       </table>
     </div>
 
-    <!-- Reviews Section -->
     <div id="reviews" class="card section" style="display:none;">
       <h3>User Reviews</h3>
       <div id="reviewsList"></div>
     </div>
   </div>
 
-  <!-- Toast Notification Container -->
+  <div id="editUserModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeEditModal()">&times;</span>
+      <h3>Edit User</h3>
+      <form id="editUserForm">
+        <input type="hidden" id="editUserId">
+        <input type="text" id="editName" placeholder="Full Name" required>
+        <input type="email" id="editEmail" placeholder="Email Address" required>
+        <select id="editRole" required>
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+        <select id="editStatus" required>
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+        </select>
+        <button type="submit">Update User</button>
+      </form>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
-  <!-- Firebase + Script -->
   <script type="module">
-    // Import Firebase SDKs
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } 
       from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, collection, getDocs, addDoc, deleteDoc, updateDoc, onSnapshot } 
+    import { getFirestore, doc, getDoc, collection, getDocs, setDoc, deleteDoc, updateDoc, onSnapshot } 
       from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyDwkxK1meIH0Ud2Pide0c9PQEsWebPWUvs",
       authDomain: "gguluddene.firebaseapp.com",
@@ -181,19 +235,19 @@
       measurementId: "G-L6V7HQQSJ9"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // DOM elements
     const blogForm = document.getElementById("blogForm");
     const blogsList = document.getElementById("blogsList");
     const usersList = document.getElementById("usersList");
     const reviewsList = document.getElementById("reviewsList");
+    const createUserForm = document.getElementById("createUserForm");
+    const editUserForm = document.getElementById("editUserForm");
+    const editUserModal = document.getElementById("editUserModal");
     const toast = document.getElementById("toast");
 
-    // Toast notification function
     const showToast = (message, type = "success") => {
       toast.textContent = message;
       toast.className = `toast ${type}`;
@@ -201,12 +255,22 @@
       setTimeout(() => (toast.style.display = "none"), 5000);
     };
 
-    // Check if user is admin
+    const getFriendlyErrorMessage = (errorCode) => {
+      switch (errorCode) {
+        case "permission-denied":
+          return "Access denied. Ensure you have admin privileges.";
+        case "unavailable":
+          return "Firestore is unavailable. Check your network connection.";
+        default:
+          return `An error occurred: ${errorCode}. Please try again or contact support.`;
+      }
+    };
+
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        console.log("No user authenticated, redirecting to login.html");
+        console.log("No user authenticated, redirecting to membership.html");
         showToast("Please log in to access the admin dashboard", "error");
-        window.location.href = "membership.html"; // Changed to membership.html
+        window.location.href = "membership.html";
         return;
       }
 
@@ -217,7 +281,7 @@
           const userData = userSnap.data();
           console.log("User data:", userData);
           if (userData.role === "admin") {
-            console.log("User is admin, fetching data...");
+            console.log("User is admin, initializing dashboard...");
             fetchBlogs();
             fetchUsers();
             fetchReviews();
@@ -229,27 +293,28 @@
         } else {
           console.error("No user document found for UID:", user.uid);
           showToast("User data not found. Please contact support.", "error");
-          window.location.href = "index.html";
+          window.location.href = "membership.html";
         }
       } catch (error) {
-        console.error("Error checking user role:", error);
-        showToast("Error verifying user: " + error.message, "error");
+        console.error("Error checking user role:", error.code, error.message);
+        showToast(getFriendlyErrorMessage(error.code), "error");
         window.location.href = "membership.html";
       }
     });
 
-    // Show specific section
     function showSection(sectionId) {
+      console.log("Showing section:", sectionId);
       document.querySelectorAll(".section").forEach((section) => {
         section.style.display = section.id === sectionId ? "block" : "none";
       });
     }
 
-    // Fetch and display blogs
     async function fetchBlogs() {
       blogsList.innerHTML = "<p>Loading blogs...</p>";
       try {
+        console.log("Fetching blogs...");
         const querySnapshot = await getDocs(collection(db, "blogs"));
+        console.log("Blogs fetched:", querySnapshot.size, "documents");
         blogsList.innerHTML = "";
         if (querySnapshot.empty) {
           blogsList.innerHTML = "<p>No blogs found.</p>";
@@ -268,26 +333,25 @@
           blogsList.appendChild(blogDiv);
         });
       } catch (error) {
-        console.error("Fetch blogs error:", error);
-        showToast("Error fetching blogs: " + error.message, "error");
+        console.error("Fetch blogs error:", error.code, error.message);
+        showToast(getFriendlyErrorMessage(error.code), "error");
       }
     }
 
-    // Delete blog
     window.deleteBlog = async (blogId) => {
       if (confirm("Are you sure you want to delete this blog?")) {
         try {
+          console.log("Deleting blog:", blogId);
           await deleteDoc(doc(db, "blogs", blogId));
           showToast("Blog deleted successfully", "success");
           fetchBlogs();
         } catch (error) {
-          console.error("Delete blog error:", error);
-          showToast("Error deleting blog: " + error.message, "error");
+          console.error("Delete blog error:", error.code, error.message);
+          showToast(getFriendlyErrorMessage(error.code), "error");
         }
       }
     };
 
-    // Handle blog form submission
     blogForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       const title = document.getElementById("blogTitle").value.trim();
@@ -300,6 +364,7 @@
       }
 
       try {
+        console.log("Posting blog:", title);
         await addDoc(collection(db, "blogs"), {
           title,
           content,
@@ -311,12 +376,11 @@
         blogForm.reset();
         fetchBlogs();
       } catch (error) {
-        console.error("Post blog error:", error);
-        showToast("Error posting blog: " + error.message, "error");
+        console.error("Post blog error:", error.code, error.message);
+        showToast(getFriendlyErrorMessage(error.code), "error");
       }
     });
 
-    // Fetch and display users
     async function fetchUsers() {
       usersList.innerHTML = "<tr><td colspan='5'>Loading users...</td></tr>";
       try {
@@ -339,7 +403,8 @@
             <td>${user.status || "Unknown"}</td>
             <td>${user.role || "Unknown"}</td>
             <td>
-              <button class="admin-btn" onclick="toggleAdminRole('${doc.id}', '${user.role || "user"}')">
+              <button class="edit-btn" onclick="openEditModal('${doc.id}', '${user.name || ''}', '${user.email || ''}', '${user.role || 'user'}', '${user.status || 'approved'}')">Edit</button>
+              <button class="admin-btn" onclick="toggleAdminRole('${doc.id}', '${user.role || 'user'}')">
                 ${user.role === "admin" ? "Remove Admin" : "Make Admin"}
               </button>
               <button class="delete-btn" onclick="deleteUser('${doc.id}')">Delete</button>
@@ -350,11 +415,88 @@
         console.log("Users rendered successfully");
       } catch (error) {
         console.error("Fetch users error:", error.code, error.message);
-        showToast("Error fetching users: " + error.message, "error");
+        showToast(getFriendlyErrorMessage(error.code), "error");
       }
     }
 
-    // Toggle admin role
+    createUserForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("createName").value.trim();
+      const email = document.getElementById("createEmail").value.trim();
+      const role = document.getElementById("createRole").value;
+      const status = document.getElementById("createStatus").value;
+
+      if (!name || !email) {
+        showToast("Name and email are required", "error");
+        return;
+      }
+
+      try {
+        console.log("Creating user:", email);
+        const userId = `manual_${Date.now()}`; // Generate a unique ID
+        await setDoc(doc(db, "users", userId), {
+          name,
+          email,
+          role,
+          status,
+          createdAt: new Date().toISOString()
+        });
+        showToast("User created successfully", "success");
+        createUserForm.reset();
+        fetchUsers();
+      } catch (error) {
+        console.error("Create user error:", error.code, error.message);
+        showToast(getFriendlyErrorMessage(error.code), "error");
+      }
+    });
+
+    window.openEditModal = (userId, name, email, role, status) => {
+      console.log("Opening edit modal for user:", userId);
+      document.getElementById("editUserId").value = userId;
+      document.getElementById("editName").value = name;
+      document.getElementById("editEmail").value = email;
+      document.getElementById("editRole").value = role;
+      document.getElementById("editStatus").value = status;
+      editUserModal.style.display = "block";
+    };
+
+    window.closeEditModal = () => {
+      console.log("Closing edit modal");
+      editUserModal.style.display = "none";
+      editUserForm.reset();
+    };
+
+    editUserForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const userId = document.getElementById("editUserId").value;
+      const name = document.getElementById("editName").value.trim();
+      const email = document.getElementById("editEmail").value.trim();
+      const role = document.getElementById("editRole").value;
+      const status = document.getElementById("editStatus").value;
+
+      if (!name || !email) {
+        showToast("Name and email are required", "error");
+        return;
+      }
+
+      try {
+        console.log("Updating user:", userId);
+        await updateDoc(doc(db, "users", userId), {
+          name,
+          email,
+          role,
+          status,
+          updatedAt: new Date().toISOString()
+        });
+        showToast("User updated successfully", "success");
+        closeEditModal();
+        fetchUsers();
+      } catch (error) {
+        console.error("Update user error:", error.code, error.message);
+        showToast(getFriendlyErrorMessage(error.code), "error");
+      }
+    });
+
     window.toggleAdminRole = async (userId, currentRole) => {
       const newRole = currentRole === "admin" ? "user" : "admin";
       if (confirm(`Are you sure you want to ${newRole === "admin" ? "make" : "remove"} this user as admin?`)) {
@@ -364,13 +506,12 @@
           showToast(`User role updated to ${newRole}`, "success");
           fetchUsers();
         } catch (error) {
-          console.error("Toggle admin role error:", error);
-          showToast("Error updating role: " + error.message, "error");
+          console.error("Toggle admin role error:", error.code, error.message);
+          showToast(getFriendlyErrorMessage(error.code), "error");
         }
       }
     };
 
-    // Delete user
     window.deleteUser = async (userId) => {
       if (confirm("Are you sure you want to delete this user?")) {
         try {
@@ -379,13 +520,12 @@
           showToast("User deleted successfully", "success");
           fetchUsers();
         } catch (error) {
-          console.error("Delete user error:", error);
-          showToast("Error deleting user: " + error.message, "error");
+          console.error("Delete user error:", error.code, error.message);
+          showToast(getFriendlyErrorMessage(error.code), "error");
         }
       }
     };
 
-    // Fetch and display reviews (real-time)
     async function fetchReviews() {
       reviewsList.innerHTML = "<p>Loading reviews...</p>";
       try {
@@ -414,28 +554,26 @@
           });
           console.log("Reviews rendered successfully");
         }, (error) => {
-          console.error("Reviews snapshot error:", error);
-          showToast("Error fetching reviews: " + error.message, "error");
+          console.error("Reviews snapshot error:", error.code, error.message);
+          showToast(getFriendlyErrorMessage(error.code), "error");
         });
       } catch (error) {
-        console.error("Reviews listener setup error:", error);
-        showToast("Error setting up reviews listener: " + error.message, "error");
+        console.error("Reviews listener setup error:", error.code, error.message);
+        showToast(getFriendlyErrorMessage(error.code), "error");
       }
     }
 
-    // Approve review
     window.approveReview = async (reviewId) => {
       try {
         console.log("Approving review:", reviewId);
         await updateDoc(doc(db, "reviews", reviewId), { status: "approved" });
         showToast("Review approved successfully", "success");
       } catch (error) {
-        console.error("Approve review error:", error);
-        showToast("Error approving review: " + error.message, "error");
+        console.error("Approve review error:", error.code, error.message);
+        showToast(getFriendlyErrorMessage(error.code), "error");
       }
     };
 
-    // Delete review
     window.deleteReview = async (reviewId) => {
       if (confirm("Are you sure you want to delete this review?")) {
         try {
@@ -443,8 +581,8 @@
           await deleteDoc(doc(db, "reviews", reviewId));
           showToast("Review deleted successfully", "success");
         } catch (error) {
-          console.error("Delete review error:", error);
-          showToast("Error deleting review: " + error.message, "error");
+          console.error("Delete review error:", error.code, error.message);
+          showToast(getFriendlyErrorMessage(error.code), "error");
         }
       }
     };

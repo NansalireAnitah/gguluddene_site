@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Gallery of sacred shrines of President Jemba Lumira-Mayengo in Bugabo, Bombo, and Luweero - Gguluddene Healers & Herbalists Association.">
+  <meta name="keywords" content="Uganda, traditional healers, shrines, Jemba Lumira-Mayengo, Bugabo, Bombo, Luweero, gallery">
+  <title>Gallery - Gguluddene Healers & Herbalists Association</title>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@700&family=Open+Sans&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    /* Gallery Styles */
+    .gallery {
+      padding: 50px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .gallery h1 {
+      color: #dd9803;
+      margin-bottom: 40px;
+      font-size: 2.2em;
+      text-align: center;
+      font-family: 'Lora', serif;
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+      margin-top: 30px;
+    }
+    .gallery-item {
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+    .gallery-item:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .gallery-item img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      display: block;
+    }
+    .gallery-item::after {
+      content: attr(data-caption);
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.8));
+      color: white;
+      padding: 20px 15px 15px;
+      font-size: 0.95em;
+      line-height: 1.4;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+    }
+    .gallery-item:hover::after {
+      transform: translateY(0);
+    }
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 50px;
+    }
+    .logo-img {
+      height: 110px;
+      width: auto;
+    }
+    .logo-text {
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #fff; /* or your navbar text color */
+    }
+
+/* Navbar (assuming shared styles) */
+.navbar {
+  background: #0d3d0f;
+  color: white;
+  padding: 1rem 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+}
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  transition: background 0.2s;
+}
+.nav-links a:hover,
+.nav-links a.active {
+  background: #dd9803;
+}
+.hamburger {
+  display: none;
+  flex-direction: column;
+  cursor: pointer;
+}
+.hamburger span {
+  width: 25px;
+  height: 3px;
+  background: white;
+  margin: 3px 0;
+  transition: 0.3s;
+}
+
+/* Footer (from provided) */
+footer {
+  background: #0f0322;
+  color: #ccc;
+  padding: 30px 20px;
+}
+footer h3 {
+  color: #dd9803;
+  margin-bottom: 10px;
+}
+.footer-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.footer-section {
+  flex: 1 1 250px;
+}
+.footer-bottom {
+  text-align: center;
+  font-size: 0.9em;
+  border-top: 1px solid #444;
+  padding-top: 10px;
+}
+.social-icons {
+  display: flex;
+  gap: 15px;
+}
+.social-icons a {
+  color: #ccc;
+  font-size: 1.5em;
+  transition: color 0.2s;
+}
+.social-icons a:hover {
+  color: #dd9803;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+  .hamburger {
+    display: flex;
+  }
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+  .gallery h1 {
+    font-size: 1.8em;
+  }
+  .footer-content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}  </style></head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="logo-container">
+      <img src="assets/images/logoo.png" alt="Gguluddene Healers & Herbalists Association Logo" class="logo-img">
+      <!-- <span class="logo-text">Gguluddene Healers & Herbalists Association</span> -->
+    </div>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="membership.html">Membership</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="news.html">News</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="donation.html">Donate</a></li>
+      <li><a href="advocacy.html">Advocacy</a></li>
+      <li><a href="gallery.html" class="active">Gallery</a></li>
+    </ul>
+    <div class="hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="gallery">
+    <h1>The Shrines of Our President, Jemba Lumira-Mayengo
+Found in Bugabo, Bombo, Luweero</h1>
+    <div class="gallery-grid">
+      <div class="gallery-item" data-caption="Sacred shrine in Bugabo, a revered site for traditional healing rituals and cultural preservation.">
+        <img src="assets/images/g1.jpg" alt="Shrine of Jemba Lumira-Mayengo in Bugabo">
+      </div>
+      <div class="gallery-item" data-caption="The healing grounds in Bombo, where ancient practices connect with modern community health.">
+        <img src="assets/images/g2.jpg" alt="Shrine of Jemba Lumira-Mayengo in Bombo">
+      </div>
+      <div class="gallery-item" data-caption="Luweero's spiritual sanctuary, embodying the essence of Uganda's herbalist traditions.">
+        <img src="assets/images/g3.jpg" alt="Shrine of Jemba Lumira-Mayengo in Luweero">
+      </div>
+      <div class="gallery-item" data-caption="A timeless shrine dedicated to traditional healing, fostering unity and cultural heritage.">
+        <img src="assets/images/g4.jpg" alt="Traditional healing shrine associated with Jemba Lumira-Mayengo">
+      </div>
+      <div class="gallery-item" data-caption="The serene environment of the Bugabo shrine, a place of reflection and healing.">
+        <img src="assets/images/g5.jpg" alt="Healing shrine in Bugabo">
+      </div>
+        <div class="gallery-item" data-caption="Bombo's shrine, a testament to the enduring legacy of traditional healers in Uganda.">
+            <img src="assets/images/g6.jpg" alt="Healing shrine in Bombo">
+        </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-section about">
+        <h3>About Us</h3>
+        <p>We are committed to preserving traditional healing practices and Uganda’s rich cultural heritage through training, advocacy, and community engagement.</p>
+      </div>
+      <div class="footer-section contact">
+        <h3>Contact Us</h3>
+        <ul>
+          <li><i class="fas fa-map-marker-alt"></i> P.O. Box 166066, Kampala, Uganda</li>
+          <li><i class="fas fa-envelope"></i> <a href="mailto:guluddenetradition@gmail.com">guluddenetradition@gmail.com</a></li>
+          <li><i class="fas fa-phone"></i> <a href="tel:+256701551719">+256(0)701 551719</a> / <a href="tel:+256752697731">+256(0)752 697731</a></li>
+        </ul>
+      </div>
+      <div class="footer-section social">
+        <h3>Follow Us</h3>
+        <div class="social-icons">
+          <a href="#"><i class="fab fa-facebook-f"></i></a>
+          <a href="#"><i class="fab fa-x-twitter"></i></a>
+          <a href="#"><i class="fab fa-youtube"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>Motto: “Unity is Strength” | “Agali awumu ge galuma ennyama”</p>
+      <p>&copy; 2025 Gguluddene Healers & Herbalists Association. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    // Simple hamburger menu toggle (if script.js doesn't have it)
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+    hamburger.addEventListener('click', () => {
+      navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
+    });
+  </script>
+</body>
+</html>
+
