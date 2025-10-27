@@ -57,30 +57,28 @@
 </div>
 
 <div class="content">
-  <!-- START DASHBOARD -->
-  <!-- START DASHBOARD -->
-<div id="start" class="section card">
-  <h2>Welcome, Admin 👋</h2>
-  <p>Here’s a quick overview of Gguluddene Traditional Healers & Herbalists' Association.</p>
-  <div class="stats-grid">
-    <div class="stat-card">
-      <i class="fas fa-users"></i>
-      <h3 id="userCount">0</h3>
-      <p>Total Users</p>
-    </div>
-    <div class="stat-card">
-      <i class="fas fa-blog"></i>
-      <h3 id="blogCount">0</h3>
-      <p>Total Blogs</p>
-    </div>
-    <div class="stat-card">
-      <i class="fas fa-comments"></i>
-      <h3 id="reviewCount">0</h3>
-      <p>Total Reviews</p>
+  <!-- DASHBOARD START -->
+  <div id="start" class="section card">
+    <h2>Welcome, Admin 👋</h2>
+    <p>Here’s a quick overview of Gguluddene Traditional Healers & Herbalists' Association.</p>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <i class="fas fa-users"></i>
+        <h3 id="userCount">0</h3>
+        <p>Total Users</p>
+      </div>
+      <div class="stat-card">
+        <i class="fas fa-blog"></i>
+        <h3 id="blogCount">0</h3>
+        <p>Total Blogs</p>
+      </div>
+      <div class="stat-card">
+        <i class="fas fa-comments"></i>
+        <h3 id="reviewCount">0</h3>
+        <p>Total Reviews</p>
+      </div>
     </div>
   </div>
-</div>
-
 
   <!-- BLOGS -->
   <div id="blogs" class="section card" style="display:none;">
@@ -116,12 +114,30 @@
   </div>
 </div>
 
+<!-- USER MODAL -->
+<div id="userModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" id="closeUserModal">&times;</span>
+    <h3>Manage User</h3>
+    <label>Name:</label>
+    <input type="text" id="modalUserName"><br><br>
+    <label>Email:</label>
+    <input type="email" id="modalUserEmail"><br><br>
+    <label>Status:</label>
+    <input type="text" id="modalUserStatus"><br><br>
+    <label>Role:</label>
+    <input type="text" id="modalUserRole"><br><br>
+    <button id="saveUserBtn">Save Changes</button>
+    <button id="deleteUserBtn" style="background:crimson;">Delete User</button>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDwkxK1meIH0Ud2Pide0c9PQEsWebPWUvs",
@@ -165,7 +181,7 @@ window.showSection = (id)=>{
   if(id==="reviews") loadReviews();
 };
 
-// ---------- START DASHBOARD ----------
+// ---------- DASHBOARD STATS ----------
 async function updateDashboardCounts(){
   const usersSnap = await getDocs(collection(db,"users"));
   const blogsSnap = await getDocs(collection(db,"blogs"));
@@ -201,35 +217,46 @@ async function loadBlogs(){
     div.style.border="1px solid #ccc"; div.style.padding="10px"; div.style.marginBottom="10px";
     div.innerHTML = `<strong>${b.title}</strong> (${b.category})<br>${b.content}<br>
       <button onclick='editBlog("${blog.id}")'>Edit</button>
-      <button onclick='deleteBlog("${blog.id}")'>Delete</button>`;
+      <button style="background:crimson;" onclick='deleteBlog("${blog.id}")'>Delete</button>`;
     blogsDiv.appendChild(div);
   });
 }
 
-async function editBlog(id){
-  const docRef = doc(db,"blogs",id);
-  const docSnap = await getDoc(docRef);
+window.editBlog = async (id)=>{
+  const docSnap = await getDoc(doc(db,"blogs",id));
   if(!docSnap.exists()) return;
   const data = docSnap.data();
-  const newTitle = prompt("Edit title", data.title);
-  const newContent = prompt("Edit content", data.content);
-  if(newTitle && newContent){
-    await updateDoc(docRef,{title:newTitle,content:newContent});
+  blogForm.blogTitle.value = data.title;
+  blogForm.blogContent.value = data.content;
+  blogForm.blogCategory.value = data.category;
+  blogForm.onsubmit = async (e)=>{
+    e.preventDefault();
+    await updateDoc(doc(db,"blogs",id),{
+      title: blogForm.blogTitle.value,
+      content: blogForm.blogContent.value,
+      category: blogForm.blogCategory.value
+    });
     showToast("Blog updated!");
+    blogForm.reset();
+    blogForm.onsubmit = defaultBlogSubmit;
     loadBlogs();
-  }
-}
+    updateDashboardCounts();
+  };
+};
+const defaultBlogSubmit = blogForm.onsubmit;
 
-async function deleteBlog(id){
+window.deleteBlog = async (id)=>{
   if(confirm("Delete this blog?")){
     await deleteDoc(doc(db,"blogs",id));
     showToast("Blog deleted!");
     loadBlogs();
     updateDashboardCounts();
   }
-}
+};
 
 // ---------- USERS ----------
+let selectedUserId = null;
+
 async function loadUsers(){
   const tbody = document.getElementById("usersList");
   tbody.innerHTML="";
@@ -238,41 +265,74 @@ async function loadUsers(){
     const data = u.data();
     const tr = document.createElement("tr");
     tr.innerHTML=`<td>${data.name}</td><td>${data.email}</td><td>${data.status}</td><td>${data.role}</td>
-      <td>
-        <button class="edit-btn" onclick='editUser("${u.id}")'>Edit</button>
-      </td>`;
+      <td><button class="edit-btn" onclick='openUserModal("${u.id}")'>Manage</button></td>`;
     tbody.appendChild(tr);
   });
 }
 
-async function editUser(id){
-  const docRef = doc(db,"users",id);
-  const docSnap = await getDoc(docRef);
+const userModal = document.getElementById("userModal");
+const closeUserModal = document.getElementById("closeUserModal");
+const saveUserBtn = document.getElementById("saveUserBtn");
+const deleteUserBtn = document.getElementById("deleteUserBtn");
+const modalUserName = document.getElementById("modalUserName");
+const modalUserEmail = document.getElementById("modalUserEmail");
+const modalUserStatus = document.getElementById("modalUserStatus");
+const modalUserRole = document.getElementById("modalUserRole");
+
+closeUserModal.onclick = ()=> userModal.style.display="none";
+window.onclick = (e)=> { if(e.target == userModal) userModal.style.display="none"; };
+
+window.openUserModal = async (id)=>{
+  selectedUserId = id;
+  const docSnap = await getDoc(doc(db,"users",id));
   if(!docSnap.exists()) return;
   const data = docSnap.data();
-  const newName = prompt("Edit name", data.name);
-  const newEmail = prompt("Edit email", data.email);
-  if(newName && newEmail){
-    await updateDoc(docRef,{name:newName,email:newEmail});
-    showToast("User updated!");
+  modalUserName.value = data.name;
+  modalUserEmail.value = data.email;
+  modalUserStatus.value = data.status;
+  modalUserRole.value = data.role;
+  userModal.style.display="block";
+};
+
+saveUserBtn.onclick = async ()=>{
+  if(!selectedUserId) return;
+  await updateDoc(doc(db,"users",selectedUserId),{
+    name: modalUserName.value,
+    email: modalUserEmail.value,
+    status: modalUserStatus.value,
+    role: modalUserRole.value
+  });
+  showToast("User updated!");
+  userModal.style.display="none";
+  loadUsers();
+  updateDashboardCounts();
+};
+
+deleteUserBtn.onclick = async ()=>{
+  if(!selectedUserId) return;
+  if(confirm("Are you sure you want to delete this user?")){
+    await deleteDoc(doc(db,"users",selectedUserId));
+    showToast("User deleted!", "success");
+    userModal.style.display="none";
     loadUsers();
     updateDashboardCounts();
   }
-}
+};
 
 // ---------- REVIEWS ----------
 async function loadReviews(){
-  const div = document.getElementById("reviewsList");
-  div.innerHTML="";
+  const revDiv = document.getElementById("reviewsList");
+  revDiv.innerHTML="";
   const snap = await getDocs(collection(db,"reviews"));
   snap.forEach(r=>{
-    const data = r.data();
-    const d = document.createElement("div");
-    d.style.border="1px solid #ccc"; d.style.padding="10px"; d.style.marginBottom="10px";
-    d.innerHTML=`<strong>${data.user}</strong>: ${data.comment}`;
-    div.appendChild(d);
+    const d = r.data();
+    const div = document.createElement("div");
+    div.style.border="1px solid #ccc"; div.style.padding="10px"; div.style.marginBottom="10px";
+    div.innerHTML = `<strong>${d.userName}</strong> (${d.rating}/5)<br>${d.comment}`;
+    revDiv.appendChild(div);
   });
 }
 </script>
+
 </body>
 </html>
