@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "@dataconnect/generated": "file:src/dataconnect-generated",
-    "firebase": "^12.2.0"
+    "firebase": "^12.4.0"
   },
   "devDependencies": {
     "vite": "^7.1.5"
