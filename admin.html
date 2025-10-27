@@ -37,6 +37,7 @@
   .stat-card i { font-size:40px; margin-bottom:10px; color:#1976d2; }
   .stat-card h3 { margin:5px 0; font-size:22px; }
   .stat-card p { margin:0; color:#666; font-size:15px; }
+  input, select, textarea { width:100%; padding:8px; margin:5px 0; border-radius:6px; border:1px solid #ccc; }
 </style>
 </head>
 <body>
@@ -57,7 +58,7 @@
 </div>
 
 <div class="content">
-  <!-- DASHBOARD START -->
+  <!-- DASHBOARD -->
   <div id="start" class="section card">
     <h2>Welcome, Admin 👋</h2>
     <p>Here’s a quick overview of Gguluddene Traditional Healers & Herbalists' Association.</p>
@@ -114,21 +115,23 @@
   </div>
 </div>
 
-<!-- USER MODAL -->
-<div id="userModal" class="modal">
+<!-- Add/Edit User Modal -->
+<div class="modal" id="userModal">
   <div class="modal-content">
     <span class="close-btn" id="closeUserModal">&times;</span>
-    <h3>Manage User</h3>
-    <label>Name:</label>
-    <input type="text" id="modalUserName"><br><br>
-    <label>Email:</label>
-    <input type="email" id="modalUserEmail"><br><br>
-    <label>Status:</label>
-    <input type="text" id="modalUserStatus"><br><br>
-    <label>Role:</label>
-    <input type="text" id="modalUserRole"><br><br>
-    <button id="saveUserBtn">Save Changes</button>
-    <button id="deleteUserBtn" style="background:crimson;">Delete User</button>
+    <h3 id="modalTitle">Add/Edit User</h3>
+    <input type="text" id="modalUserName" placeholder="Name">
+    <input type="email" id="modalUserEmail" placeholder="Email">
+    <select id="modalUserStatus">
+      <option value="approved">Approved</option>
+      <option value="pending">Pending</option>
+    </select>
+    <select id="modalUserRole">
+      <option value="user">User</option>
+      <option value="admin">Admin</option>
+    </select>
+    <button id="saveUserBtn">Save</button>
+    <button id="deleteUserBtn" style="background:crimson;color:white;display:none;">Delete</button>
   </div>
 </div>
 
@@ -181,7 +184,7 @@ window.showSection = (id)=>{
   if(id==="reviews") loadReviews();
 };
 
-// ---------- DASHBOARD STATS ----------
+// ---------- DASHBOARD ----------
 async function updateDashboardCounts(){
   const usersSnap = await getDocs(collection(db,"users"));
   const blogsSnap = await getDocs(collection(db,"blogs"));
@@ -217,72 +220,103 @@ async function loadBlogs(){
     div.style.border="1px solid #ccc"; div.style.padding="10px"; div.style.marginBottom="10px";
     div.innerHTML = `<strong>${b.title}</strong> (${b.category})<br>${b.content}<br>
       <button onclick='editBlog("${blog.id}")'>Edit</button>
-      <button style="background:crimson;" onclick='deleteBlog("${blog.id}")'>Delete</button>`;
+      <button onclick='deleteBlog("${blog.id}")'>Delete</button>`;
     blogsDiv.appendChild(div);
   });
 }
 
-window.editBlog = async (id)=>{
-  const docSnap = await getDoc(doc(db,"blogs",id));
+async function editBlog(id){
+  const docRef = doc(db,"blogs",id);
+  const docSnap = await getDoc(docRef);
   if(!docSnap.exists()) return;
   const data = docSnap.data();
-  blogForm.blogTitle.value = data.title;
-  blogForm.blogContent.value = data.content;
-  blogForm.blogCategory.value = data.category;
-  blogForm.onsubmit = async (e)=>{
-    e.preventDefault();
-    await updateDoc(doc(db,"blogs",id),{
-      title: blogForm.blogTitle.value,
-      content: blogForm.blogContent.value,
-      category: blogForm.blogCategory.value
-    });
+  const newTitle = prompt("Edit title", data.title);
+  const newContent = prompt("Edit content", data.content);
+  if(newTitle && newContent){
+    await updateDoc(docRef,{title:newTitle,content:newContent});
     showToast("Blog updated!");
-    blogForm.reset();
-    blogForm.onsubmit = defaultBlogSubmit;
     loadBlogs();
-    updateDashboardCounts();
-  };
-};
-const defaultBlogSubmit = blogForm.onsubmit;
+  }
+}
 
-window.deleteBlog = async (id)=>{
+async function deleteBlog(id){
   if(confirm("Delete this blog?")){
     await deleteDoc(doc(db,"blogs",id));
     showToast("Blog deleted!");
     loadBlogs();
     updateDashboardCounts();
   }
-};
+}
 
 // ---------- USERS ----------
 let selectedUserId = null;
-
-async function loadUsers(){
-  const tbody = document.getElementById("usersList");
-  tbody.innerHTML="";
-  const snap = await getDocs(collection(db,"users"));
-  snap.forEach(u=>{
-    const data = u.data();
-    const tr = document.createElement("tr");
-    tr.innerHTML=`<td>${data.name}</td><td>${data.email}</td><td>${data.status}</td><td>${data.role}</td>
-      <td><button class="edit-btn" onclick='openUserModal("${u.id}")'>Manage</button></td>`;
-    tbody.appendChild(tr);
-  });
-}
-
 const userModal = document.getElementById("userModal");
-const closeUserModal = document.getElementById("closeUserModal");
-const saveUserBtn = document.getElementById("saveUserBtn");
-const deleteUserBtn = document.getElementById("deleteUserBtn");
 const modalUserName = document.getElementById("modalUserName");
 const modalUserEmail = document.getElementById("modalUserEmail");
 const modalUserStatus = document.getElementById("modalUserStatus");
 const modalUserRole = document.getElementById("modalUserRole");
+const saveUserBtn = document.getElementById("saveUserBtn");
+const deleteUserBtn = document.getElementById("deleteUserBtn");
+document.getElementById("closeUserModal").onclick = ()=> userModal.style.display="none";
 
-closeUserModal.onclick = ()=> userModal.style.display="none";
-window.onclick = (e)=> { if(e.target == userModal) userModal.style.display="none"; };
+document.getElementById("openAddUserModal").onclick = ()=>{
+  selectedUserId = null;
+  modalUserName.value = "";
+  modalUserEmail.value = "";
+  modalUserStatus.value = "approved";
+  modalUserRole.value = "user";
+  saveUserBtn.textContent = "Add User";
+  deleteUserBtn.style.display = "none";
+  userModal.style.display = "block";
+};
 
-window.openUserModal = async (id)=>{
+saveUserBtn.onclick = async ()=>{
+  const data = {
+    name: modalUserName.value,
+    email: modalUserEmail.value,
+    status: modalUserStatus.value,
+    role: modalUserRole.value
+  };
+  if(!data.name || !data.email) { showToast("Fill all fields","error"); return; }
+
+  if(selectedUserId){
+    await updateDoc(doc(db,"users",selectedUserId),data);
+    showToast("User updated!");
+  } else {
+    await addDoc(collection(db,"users"),data);
+    showToast("New user added!");
+  }
+  userModal.style.display="none";
+  loadUsers();
+  updateDashboardCounts();
+};
+
+deleteUserBtn.onclick = async ()=>{
+  if(selectedUserId && confirm("Delete this user?")){
+    await deleteDoc(doc(db,"users",selectedUserId));
+    showToast("User deleted!");
+    userModal.style.display="none";
+    loadUsers();
+    updateDashboardCounts();
+  }
+};
+
+async function loadUsers(){
+  const tbody = document.getElementById("usersList");
+  tbody.innerHTML="";
+  const usersSnap = await getDocs(collection(db,"users"));
+  usersSnap.forEach(u=>{
+    const d = u.data();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${d.name}</td><td>${d.email}</td><td>${d.status}</td><td>${d.role}</td>
+      <td>
+        <button class="edit-btn" onclick='editUser("${u.id}")'>Manage</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function editUser(id){
   selectedUserId = id;
   const docSnap = await getDoc(doc(db,"users",id));
   if(!docSnap.exists()) return;
@@ -291,45 +325,22 @@ window.openUserModal = async (id)=>{
   modalUserEmail.value = data.email;
   modalUserStatus.value = data.status;
   modalUserRole.value = data.role;
+  saveUserBtn.textContent="Save Changes";
+  deleteUserBtn.style.display="inline-block";
   userModal.style.display="block";
-};
-
-saveUserBtn.onclick = async ()=>{
-  if(!selectedUserId) return;
-  await updateDoc(doc(db,"users",selectedUserId),{
-    name: modalUserName.value,
-    email: modalUserEmail.value,
-    status: modalUserStatus.value,
-    role: modalUserRole.value
-  });
-  showToast("User updated!");
-  userModal.style.display="none";
-  loadUsers();
-  updateDashboardCounts();
-};
-
-deleteUserBtn.onclick = async ()=>{
-  if(!selectedUserId) return;
-  if(confirm("Are you sure you want to delete this user?")){
-    await deleteDoc(doc(db,"users",selectedUserId));
-    showToast("User deleted!", "success");
-    userModal.style.display="none";
-    loadUsers();
-    updateDashboardCounts();
-  }
-};
+}
 
 // ---------- REVIEWS ----------
 async function loadReviews(){
-  const revDiv = document.getElementById("reviewsList");
-  revDiv.innerHTML="";
-  const snap = await getDocs(collection(db,"reviews"));
-  snap.forEach(r=>{
+  const div = document.getElementById("reviewsList");
+  div.innerHTML="";
+  const reviewsSnap = await getDocs(collection(db,"reviews"));
+  reviewsSnap.forEach(r=>{
     const d = r.data();
-    const div = document.createElement("div");
-    div.style.border="1px solid #ccc"; div.style.padding="10px"; div.style.marginBottom="10px";
-    div.innerHTML = `<strong>${d.userName}</strong> (${d.rating}/5)<br>${d.comment}`;
-    revDiv.appendChild(div);
+    const rdiv = document.createElement("div");
+    rdiv.style.border="1px solid #ccc"; rdiv.style.padding="10px"; rdiv.style.marginBottom="10px";
+    rdiv.innerHTML = `<strong>${d.user}</strong>: ${d.comment} <em>(${d.date || ''})</em>`;
+    div.appendChild(rdiv);
   });
 }
 </script>
