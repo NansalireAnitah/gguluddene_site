@@ -1,199 +1,151 @@
-<!-- news.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cultural Hub - News</title>
+  <meta name="description" content="Latest news and updates from Gguluddene Healers & Herbalists Association.">
+  <meta name="keywords" content="Uganda, traditional healers, news, updates, Gguluddene Healers & Herbalists Association">
+  <title>News - Gguluddene Healers & Herbalists Association</title>
+
+  <!-- Styles -->
   <link rel="stylesheet" href="styles.css">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@700&family=Open+Sans&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
   <style>
-    /* Center and bold main heading */
-    .content h1 {
-      text-align: center;
-      font-weight: bold;
-      color: #000;
-      font-size: 2em;
-      margin-bottom: 20px;
-    }
+    .navbar { background: #0d3d0f; color: white; padding: 1rem 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+    .nav-links { display: flex; list-style: none; gap: 20px; margin: 0; padding: 0; }
+    .nav-links a { color: white; text-decoration: none; padding: 10px 15px; border-radius: 5px; transition: background 0.2s; }
+    .nav-links a:hover, .nav-links a.active { background: #dd9803; }
+    .hamburger { display: none; flex-direction: column; cursor: pointer; }
+    .hamburger span { width: 25px; height: 3px; background: white; margin: 3px 0; transition: 0.3s; }
 
-    /* News grid */
-    .news-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
-    }
+   .news {
+  padding: 50px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
 
-    .news-card {
-      background: #fff;
-      color: #333;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      transition: transform 0.2s;
-    }
+.news h1 {
+  font-family: 'Lora', serif;
+  font-size: 2.2em;
+  color: #dd9803;
+  margin-bottom: 40px;
+  text-align: center;
+}
 
-    .news-card:hover {
-      transform: translateY(-5px);
-    }
+/* ✅ Grid layout */
+#news-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+}
 
-    .news-card img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-    }
+/* ✅ Each article box */
+.news-article {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
 
-    .news-card .content {
-      padding: 15px;
-    }
+.news-article:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
 
-    .news-card h3 {
-      margin: 0 0 10px;
-      font-size: 1.2em;
-    }
+.news-article img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
 
-    .news-card p {
-      font-size: 0.95em;
-      line-height: 1.4;
-    }
+.news-article h2 {
+  color: #0d3d0f;
+  font-size: 1.2em;
+  margin-bottom: 10px;
+}
 
-    .read-more {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 8px 12px;
-      background-color: #dd9803;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 0.9em;
-      text-decoration: none;
-    }
+.news-article .date {
+  font-size: 0.9em;
+  color: #888;
+  margin-bottom: 10px;
+}
 
-    .extra-content {
-      display: none;
-      margin-top: 10px;
-      font-size: 0.9em;
-      color: #555;
-    }
+.news-article p {
+  line-height: 1.6;
+  color: #333;
+  flex-grow: 1;
+}
+
+.read-more {
+  color: #dd9803;
+  cursor: pointer;
+  display: inline-block;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+/* ✅ Responsive for tablets */
+@media (max-width: 992px) {
+  #news-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ✅ Responsive for phones */
+@media (max-width: 600px) {
+  #news-container {
+    grid-template-columns: 1fr;
+  }
+}
+  
+.footer-content { 
+  flex-direction: column; 
+  align-items: center; 
+  text-align: center; 
+}
   </style>
 </head>
 <body>
+
   <!-- NAVBAR -->
- <nav class="navbar">
-  <div class="logo-container">
-    <img src="assets/images/logoo.png" alt="Traditional Healers Uganda Logo" class="logo-img">
-    <!-- <span class="logo-text">Traditional Healers Uganda</span> -->
-  </div>
-  <ul class="nav-links">
-    <li><a href="index.html" class="active">Home</a></li>
-    <li><a href="about.html">About</a></li>
-    <li><a href="resources.html">Resources</a></li>
-    <li><a href="membership.html">Membership</a></li>
-    <li><a href="services.html">Services</a></li>
-    <li><a href="news.html">News</a></li>
-    <li><a href="contact.html">Contact</a></li>
-    <li><a href="donation.html">Donate</a></li>
-    <li><a href="advocacy.html">Advocacy</a></li>
-    <li><a href="gallery.html">Gallery</a></li>
-  </ul>
-  <div class="hamburger">
-    <span></span>
-    <span></span>
-    <span></span>
-  </div>
-</nav>
+  <nav class="navbar">
+    <div class="logo-container">
+      <img src="assets/images/logoo.png" alt="Gguluddene Logo" class="logo-img">
+    </div>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="membership.html">Membership</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="news.html" class="active">News</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="donation.html">Donate</a></li>
+      <li><a href="advocacy.html">Advocacy</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
+    </ul>
+    <div class="hamburger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </nav>
 
   <!-- MAIN CONTENT -->
-  <main>
-    <section class="content">
-      <h1>News & Updates</h1>
-      <p>Stay informed with the latest cultural events, announcements, and initiatives.</p>
-
-      <div class="news-grid">
-        <!-- News Card 1 -->
-        <div class="news-card">
-          <img src="assets/images/bg2.jpg" alt="Cultural Festival">
-          <div class="content">
-            <h3>Recent Cultural Festival</h3>
-            <p>Read about our latest event celebrating local traditions.</p>
-            <a class="read-more">Read More</a>
-            <div class="extra-content">
-              <p>The festival featured traditional music, dance, and craft demonstrations, attracting participants from across the region and fostering cultural exchange.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- News Card 2 -->
-        <div class="news-card">
-          <img src="assets/images/bg4.jpg" alt="Workshop">
-          <div class="content">
-            <h3>Artisan Workshop</h3>
-            <p>Learn about our hands-on craft workshops.</p>
-            <a class="read-more">Read More</a>
-            <div class="extra-content">
-              <p>Our workshops provide training in traditional arts, promoting skill-sharing and preserving heritage crafts for future generations.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- News Card 3 -->
-        <div class="news-card">
-          <img src="assets/images/bg1.jpg" alt="Exhibition">
-          <div class="content">
-            <h3>Exhibition Highlights</h3>
-            <p>Highlights from recent exhibitions showcasing cultural art.</p>
-            <a class="read-more">Read More</a>
-            <div class="extra-content">
-              <p>The exhibition featured visual arts, photography, and storytelling installations celebrating cultural diversity and historical narratives.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- News Card 4 -->
-        <div class="news-card">
-          <img src="assets/images/bg1.jpg" alt="Cultural Forum">
-          <div class="content">
-            <h3>Cultural Forum</h3>
-            <p>Updates on discussions and community forums.</p>
-            <a class="read-more">Read More</a>
-            <div class="extra-content">
-              <p>The forum brought together scholars, artists, and community leaders to discuss cultural preservation strategies and share innovative ideas.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- News Card 5 -->
-        <div class="news-card">
-          <img src="assets/images/bg2.jpg" alt="Announcement">
-          <div class="content">
-            <h3>Important Announcements</h3>
-            <p>Keep up with the latest organizational news.</p>
-            <a class="read-more">Read More</a>
-            <div class="extra-content">
-              <p>Announcements include upcoming events, program launches, and new initiatives designed to support cultural education and engagement.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- News Card 6 -->
-        <div class="news-card">
-          <img src="assets/images/bg3.jpg" alt="Collaboration">
-          <div class="content">
-            <h3>New Collaborations</h3>
-            <p>Updates on partnerships with cultural institutions.</p>
-            <a class="read-more">Read More</a>
-            <div class="extra-content">
-              <p>We are collaborating with museums, schools, and cultural organizations to expand our reach and share heritage knowledge with wider audiences.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+  <main class="news">
+    <h1>Latest News & Updates</h1>
+    <div id="news-container"></div>
   </main>
 
   <!-- FOOTER -->
-   <footer>
+  <footer>
     <div class="footer-content">
       <div class="footer-section about">
         <h3>About Us</h3>
@@ -217,19 +169,81 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p>Motto: “Unity is Strength” | “Agali awamu ge galuma ennyama”</p>
+      <p>Motto: “Unity is Strength” | “Agali awumu ge galuma ennyama”</p>
       <p>&copy; 2025 Gguluddene Healers & Herbalists Association. All rights reserved.</p>
     </div>
   </footer>
 
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-  <script>
-    // Toggle Read More
-    document.querySelectorAll('.read-more').forEach(button => {
-      button.addEventListener('click', () => {
-        const extra = button.nextElementSibling;
-        extra.style.display = extra.style.display === 'block' ? 'none' : 'block';
+    const firebaseConfig = {
+      apiKey: "AIzaSyDwkxK1meIH0Ud2Pide0c9PQEsWebPWUvs",
+      authDomain: "gguluddene.firebaseapp.com",
+      projectId: "gguluddene",
+      storageBucket: "gguluddene.appspot.com",
+      messagingSenderId: "418864999337",
+      appId: "1:418864999337:web:fb6468f95c6633b670b2b8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const newsContainer = document.getElementById('news-container');
+
+    async function loadBlogs() {
+      const blogsRef = collection(db, "blogs");
+      const q = query(blogsRef, orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+
+      newsContainer.innerHTML = "";
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const date = data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
+        const formattedDate = date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+
+        // Shorten content for "Read More"
+        const shortContent = data.content.length > 200 ? data.content.substring(0, 200) + "..." : data.content;
+        const isLong = data.content.length > 200;
+
+        const article = document.createElement("div");
+        article.className = "news-article";
+        article.innerHTML = `
+          <h2>${data.title}</h2>
+          <div class="date">${formattedDate}</div>
+          <p class="content">${shortContent}</p>
+          ${isLong ? `<span class="read-more">Read More</span>` : ""}
+          ${data.imageUrl ? `<img src="${data.imageUrl}" alt="${data.title}">` : ""}
+        `;
+        newsContainer.appendChild(article);
       });
+
+      // Add Read More / Read Less toggle
+      document.querySelectorAll('.read-more').forEach(button => {
+        button.addEventListener('click', () => {
+          const p = button.previousElementSibling;
+          const fullText = snapshot.docs.find(doc => doc.data().title === p.parentElement.querySelector('h2').textContent).data().content;
+
+          if (button.textContent === "Read More") {
+            p.textContent = fullText;
+            button.textContent = "Read Less";
+          } else {
+            p.textContent = fullText.substring(0, 200) + "...";
+            button.textContent = "Read More";
+          }
+        });
+      });
+    }
+
+    loadBlogs();
+
+    // Hamburger toggle
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+    hamburger.addEventListener('click', () => {
+      navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
     });
   </script>
 </body>
